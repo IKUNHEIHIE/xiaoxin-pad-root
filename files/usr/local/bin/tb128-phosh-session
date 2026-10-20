@@ -1,0 +1,17 @@
+#!/bin/sh
+# Use the verified software session if the boot-time frequency limit failed.
+if [ "$(cat /sys/class/devfreq/5900000.gpu/max_freq 2>/dev/null)" != 320000000 ]; then
+    exec /usr/local/bin/tb128-phosh-session.software
+fi
+unset DISPLAY WAYLAND_DISPLAY LIBGL_ALWAYS_SOFTWARE GALLIUM_DRIVER
+export XDG_SESSION_TYPE=wayland
+export XDG_CURRENT_DESKTOP=Phosh:GNOME
+export XDG_SESSION_DESKTOP=phosh
+export WLR_BACKENDS=drm,libinput
+export WLR_DRM_DEVICES=/dev/dri/card1
+export WLR_RENDERER=gles2
+export MESA_LOADER_DRIVER_OVERRIDE=msm
+export FD_MESA_DEBUG=sysmem,noubwc,nolrz
+export GSK_RENDERER=cairo
+export GNOME_SESSION=/usr/local/bin/tb128-gnome-session-software
+exec dbus-run-session -- /usr/bin/phosh-session

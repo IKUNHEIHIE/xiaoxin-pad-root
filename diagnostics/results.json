@@ -1,0 +1,72 @@
+{
+  "date": "2026-10-21",
+  "device": "Lenovo TB128FU, BOE HX83102P / Himax HX83102E",
+  "touch_irq_baseline": {
+    "duration_seconds": 15,
+    "contacts": 87,
+    "median_contact_ms": 160.58,
+    "median_updates_per_contact": 2,
+    "median_irq_service_us": 835.5
+  },
+  "touch_fifo_diagnostic": {
+    "duration_seconds": 20,
+    "reads": 2026,
+    "points": 1972,
+    "motion": 1970,
+    "bad_checksum": 14,
+    "bus_errors": 0,
+    "scope": "one bounded diagnostic, not a guaranteed report rate"
+  },
+  "gpu": {
+    "renderer": "Freedreno FD610",
+    "compositor": "Phoc GLES2",
+    "applications": "software",
+    "max_freq_target_hz": 320000000,
+    "cur_freq_samples_hz": [
+      320000000,
+      465000000,
+      320000000
+    ],
+    "egl_checks": [
+      {
+        "size": 64,
+        "frames": 3
+      },
+      {
+        "size": 512,
+        "frames": 200
+      },
+      {
+        "size": 1024,
+        "frames": 600
+      }
+    ],
+    "scope": "pixel readback and actual desktop operation, no claim of all hardware/video/Vulkan stability"
+  },
+  "startup": {
+    "method": "Phosh startup tracker interval; not a repeated cold-cache benchmark",
+    "direct_calculator_first_buffer_seconds": 0.825,
+    "after_patch_seconds": {
+      "settings": 1.378,
+      "calculator": 1.042,
+      "clock": 0.93,
+      "calendar_first": 6.022,
+      "calendar_later": 0.964,
+      "software": 5.382
+    },
+    "unexplained_first_settings_seconds": 26.46,
+    "scope": "user confirmed broad improvement; not a promise that every application launches in one second"
+  },
+  "reboot_scope": "Final GPU/touch survived actual full reboot; later GTK private-library change was validated by full desktop-session restart, not another full reboot",
+  "unverified": [
+    "audio",
+    "camera capture",
+    "bluetooth",
+    "sensors",
+    "hardware video decode",
+    "Vulkan",
+    "long-term thermals/battery/charging",
+    "reliable deep suspend",
+    "multi-touch beyond primary single-finger use"
+  ]
+}

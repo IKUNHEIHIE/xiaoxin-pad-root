@@ -1,0 +1,6 @@
+#!/bin/sh
+export LIBGL_ALWAYS_SOFTWARE=true
+export GALLIUM_DRIVER=llvmpipe
+export GSK_RENDERER=cairo
+unset MESA_LOADER_DRIVER_OVERRIDE
+exec /usr/bin/gnome-session "$@"

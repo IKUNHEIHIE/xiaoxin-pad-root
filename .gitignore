@@ -1,0 +1,27 @@
+# Keep the public repository source-only.
+*.img
+*.bin
+*.elf
+*.mbn
+*.ko
+*.o
+*.a
+*.so*
+*.ext4
+*.7z
+*.zip
+*.tar
+*.tar.gz
+*.tar.xz
+*.deb
+*.log
+*.pcap*
+*.pem
+*.key
+.env
+__pycache__/
+build/
+rootfs/
+backups/
+downloads/
+.cache/

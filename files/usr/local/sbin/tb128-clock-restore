@@ -1,0 +1,8 @@
+#!/bin/sh
+for attempt in $(seq 1 30); do
+    [ -e /sys/class/rtc/rtc0 ] && break
+    sleep 1
+done
+saved=$(cat /var/lib/tb128/last-time 2>/dev/null || echo 0)
+case "$saved" in ''|*[!0-9]*) exit 1 ;; esac
+[ "$(date +%s)" -ge "$saved" ] || date -u -s "@$saved"

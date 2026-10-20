@@ -1,0 +1,14 @@
+[Unit]
+Description=Restore tablet time after the PMIC RTC is registered
+After=systemd-udev-trigger.service systemd-remount-fs.service
+Before=display-manager.service
+RequiresMountsFor=/var/lib/tb128
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/tb128-clock-restore
+ExecStop=/usr/local/sbin/tb128-clock-save
+
+[Install]
+WantedBy=multi-user.target

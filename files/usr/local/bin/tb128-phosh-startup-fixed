@@ -1,0 +1,9 @@
+#!/bin/sh
+if [ "$(dpkg-query -W -f='${Version}' libgtk-3-0t64 2>/dev/null)" = 3.24.49-3 ] && \
+   [ -f /opt/tb128-gtk3-startup/lib/libgdk-3.so.0 ]; then
+    export LD_LIBRARY_PATH="/opt/tb128-gtk3-startup/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+fi
+if [ -f /run/tb128-app-launch-trial ]; then
+    export G_MESSAGES_DEBUG=phosh-app-tracker
+fi
+exec /usr/libexec/phosh "$@"

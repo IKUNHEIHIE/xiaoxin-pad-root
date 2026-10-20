@@ -1,0 +1,15 @@
+[Unit]
+Description=Continuous input for TB128FU touchscreen
+After=systemd-udevd.service tb128-gpu-safe-clock.service
+Before=greetd.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/tb128-touch-poll-start
+ExecStop=/usr/local/sbin/tb128-touch-poll-stop
+RemainAfterExit=yes
+TimeoutStartSec=30
+TimeoutStopSec=10
+
+[Install]
+WantedBy=greetd.service

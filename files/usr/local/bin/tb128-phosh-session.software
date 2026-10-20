@@ -1,0 +1,12 @@
+#!/bin/sh
+unset DISPLAY WAYLAND_DISPLAY
+export XDG_SESSION_TYPE=wayland
+export XDG_CURRENT_DESKTOP=Phosh:GNOME
+export XDG_SESSION_DESKTOP=phosh
+export WLR_BACKENDS=drm,libinput
+export WLR_DRM_DEVICES=/dev/dri/card1
+export WLR_RENDERER=pixman
+export LIBGL_ALWAYS_SOFTWARE=true
+export GALLIUM_DRIVER=llvmpipe
+export GSK_RENDERER=cairo
+exec dbus-run-session -- /usr/bin/phosh-session

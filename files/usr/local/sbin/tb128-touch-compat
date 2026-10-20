@@ -1,0 +1,198 @@
+#!/usr/bin/python3
+"""Temporary single-finger compatibility for the port's fragmented contacts."""
+import argparse
+import fcntl
+import os
+from pathlib import Path
+import select
+import signal
+import struct
+import sys
+import time
+
+sys.path.insert(0, '/usr/local/lib/tb128-input')
+from pywayland.client import Display
+from wlr_virtual_pointer_unstable_v1 import ZwlrVirtualPointerManagerV1
+
+
+class Gesture:
+    """Delay a release briefly so the driver's 8–12 ms gaps stay one gesture."""
+    def __init__(self, pointer, display):
+        self.pointer, self.display = pointer, display
+        self.mode = None
+        self.deadline = None
+        self.x = self.y = 0
+        self.start = self.previous = (0, 0)
+
+    def stamp(self):
+        return int(time.monotonic() * 1000) & 0xffffffff
+
+    def move(self, x, y):
+        self.pointer.motion_absolute(self.stamp(), max(0, min(1200, x)),
+                                     max(0, min(2000, y)), 1200, 2000)
+
+    def flush(self):
+        self.pointer.frame()
+        if self.display.flush() < 0:
+            raise ConnectionError('Wayland connection no longer writable')
+
+    def update(self, active, x, y, event_time=None):
+        event_time = time.monotonic() if event_time is None else event_time
+        if self.deadline is not None and event_time >= self.deadline:
+            self.release()
+        self.x, self.y = x, y
+        if not active:
+            if self.mode is not None and self.deadline is None:
+                self.deadline = event_time + .045
+            return
+        self.deadline = None
+        if self.mode is None:
+            self.mode = 'pending'
+            self.start = self.previous = (x, y)
+            self.move(x, y)
+            self.flush()
+            return
+        if self.mode == 'pending' and max(abs(x-self.start[0]), abs(y-self.start[1])) > 22:
+            # Edge drags control the shell; other drags scroll application content.
+            self.mode = 'drag' if self.start[1] < 90 or self.start[1] > 1870 else 'scroll'
+            if self.mode == 'drag':
+                self.move(*self.start)
+                self.pointer.button(self.stamp(), 272, 1)
+                self.flush()
+        if self.mode == 'drag':
+            self.move(x, y)
+            self.flush()
+        elif self.mode == 'scroll':
+            dx, dy = x-self.previous[0], y-self.previous[1]
+            if dy:
+                self.pointer.axis(self.stamp(), 0, -dy / 2)
+                self.pointer.axis_source(1)
+            if dx:
+                self.pointer.axis(self.stamp(), 1, -dx / 2)
+                self.pointer.axis_source(1)
+            self.flush()
+        self.previous = (x, y)
+
+    def release(self, cancel=False):
+        if self.mode == 'pending' and not cancel:
+            self.move(*self.start)
+            self.pointer.button(self.stamp(), 272, 1)
+            self.flush()
+            self.pointer.button(self.stamp(), 272, 0)
+            self.flush()
+        elif self.mode == 'drag':
+            self.pointer.button(self.stamp(), 272, 0)
+            self.flush()
+        elif self.mode == 'scroll':
+            self.pointer.axis_stop(self.stamp(), 0)
+            self.pointer.axis_source(1)
+            self.pointer.axis_stop(self.stamp(), 1)
+            self.pointer.axis_source(1)
+            self.flush()
+        if self.mode is not None:
+            print('GESTURE', self.mode, flush=True)
+        self.mode = self.deadline = None
+
+
+def connect():
+    display = Display()
+    display.connect()
+    registry = display.get_registry()
+    managers = []
+    def global_added(registry, name, interface, version):
+        if interface == ZwlrVirtualPointerManagerV1.name:
+            managers.append(registry.bind(name, ZwlrVirtualPointerManagerV1, min(version, 2)))
+    registry.dispatcher['global'] = global_added
+    display.roundtrip()
+    if not managers:
+        raise RuntimeError('Phoc virtual pointer protocol unavailable')
+    pointer = managers[0].create_virtual_pointer(None)
+    display.roundtrip()
+    return display, pointer, registry, managers[0]
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--probe', action='store_true')
+    parser.add_argument('--selftest', action='store_true')
+    args = parser.parse_args()
+    display, pointer, registry, manager = connect()
+    if args.probe or args.selftest:
+        if args.selftest:
+            # wlroots 0.18 axis_source applies to the most recently selected axis.
+            for i in range(80):
+                stamp = int(time.monotonic()*1000) & 0xffffffff
+                for axis in range(2):
+                    pointer.axis(stamp, axis, 1 if i % 2 else -1)
+                    pointer.axis_source(1)
+                pointer.frame()
+                for axis in range(2):
+                    pointer.axis_stop(stamp, axis)
+                    pointer.axis_source(1)
+                pointer.frame()
+                if display.roundtrip() < 0:
+                    raise ConnectionError('Compositor failed axis selftest')
+            print('PHOC_AXIS_SELFTEST_PASSED 160 frames', flush=True)
+        else:
+            print('PHOC_VIRTUAL_POINTER_READY', flush=True)
+        pointer.destroy()
+        display.roundtrip()
+        manager.destroy()
+        registry.destroy()
+        display.flush()
+        display.disconnect()
+        return
+    paths = [p for p in Path('/sys/class/input').glob('event*')
+             if (p/'device/name').read_text().strip() == 'himax-touchscreen']
+    if len(paths) != 1:
+        raise RuntimeError('Expected one physical Himax touchscreen')
+    fd = os.open('/dev/input/' + paths[0].name, os.O_RDONLY | os.O_NONBLOCK)
+    gesture = Gesture(pointer, display)
+    event = struct.Struct('@llHHi')
+    active = False
+    x = y = slot = 0
+    signal.signal(signal.SIGTERM, lambda *_: sys.exit(0))
+    try:
+        fcntl.ioctl(fd, 0x400445a0, struct.pack('i', time.CLOCK_MONOTONIC))
+        fcntl.ioctl(fd, 0x40044590, 1)  # EVIOCGRAB; released automatically on close.
+        print('PHYSICAL_TOUCH_GRABBED', paths[0].name, flush=True)
+        while True:
+            delay = .5 if gesture.deadline is None else max(0, gesture.deadline-time.monotonic())
+            ready, _, _ = select.select([fd, display.get_fd()], [], [], delay)
+            if fd in ready:
+                data = os.read(fd, event.size*256)
+                if not data:
+                    raise EOFError('Physical touchscreen disconnected')
+                for offset in range(0, len(data), event.size):
+                    sec, usec, kind, code, value = event.unpack_from(data, offset)
+                    if kind == 3 and code == 47:
+                        slot = value
+                    elif kind == 3 and slot == 0:
+                        if code == 53: x = value
+                        elif code == 54: y = value
+                        elif code == 57: active = value >= 0
+                    elif kind == 0 and code == 0:
+                        gesture.update(active, x, y, sec+usec/1e6)
+                    elif kind == 0 and code == 3:
+                        gesture.release(cancel=True)
+                        raise RuntimeError('Kernel dropped input events; restarting safely')
+            if display.get_fd() in ready:
+                if display.dispatch(block=True) < 0:
+                    raise ConnectionError('Compositor disconnected')
+            if gesture.deadline is not None and time.monotonic() >= gesture.deadline:
+                gesture.release()
+    finally:
+        os.close(fd)
+        try:
+            gesture.release(cancel=True)
+            pointer.destroy()
+            manager.destroy()
+            registry.destroy()
+            display.flush()
+            display.disconnect()
+        except Exception:
+            pass
+
+
+if __name__ == '__main__':
+    main()

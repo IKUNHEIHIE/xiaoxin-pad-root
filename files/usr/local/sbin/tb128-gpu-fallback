@@ -1,0 +1,9 @@
+#!/bin/sh
+set -eu
+touch /var/lib/tb128/gpu-fallback
+cp -a /usr/local/bin/tb128-phosh-session.software /usr/local/bin/tb128-phosh-session
+systemctl stop greetd
+rm -f /run/greetd.run
+systemctl reset-failed tb128-touch-compat
+systemctl start greetd
+logger -t tb128-gpu-guard 'GPU fault detected; restored software desktop'

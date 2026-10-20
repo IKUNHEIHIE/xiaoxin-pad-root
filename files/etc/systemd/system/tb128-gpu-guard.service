@@ -1,0 +1,15 @@
+[Unit]
+Description=Restore software desktop after TB128FU GPU faults
+After=systemd-journald.service
+Before=greetd.service
+ConditionPathExists=!/var/lib/tb128/gpu-fallback
+
+[Service]
+Type=simple
+ExecStart=/usr/local/sbin/tb128-gpu-guard
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=5
+
+[Install]
+WantedBy=multi-user.target

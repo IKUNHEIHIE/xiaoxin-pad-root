@@ -1,0 +1,11 @@
+#!/bin/sh
+set -eu
+p=/sys/class/devfreq/5900000.gpu
+for i in $(seq 1 80); do
+  [ ! -w "$p/max_freq" ] || break
+  sleep .25
+done
+test -w "$p/max_freq"
+grep -qw 320000000 "$p/available_frequencies"
+printf '320000000\n' > "$p/max_freq"
+test "$(cat "$p/max_freq")" = 320000000

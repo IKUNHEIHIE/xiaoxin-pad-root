@@ -1,0 +1,18 @@
+[Unit]
+Description=TB128 USB ACM serial gadget
+DefaultDependencies=no
+After=sys-kernel-config.mount systemd-udevd.service
+Wants=sys-kernel-config.mount
+Before=getty.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/tb128-usb-serial-gadget
+Restart=on-failure
+RestartSec=2
+StandardOutput=journal+console
+
+[Install]
+WantedBy=initrd.target multi-user.target

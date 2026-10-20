@@ -1,0 +1,5 @@
+
+# TB128FU graphics driver stability workaround
+LIBGL_ALWAYS_SOFTWARE=true
+GALLIUM_DRIVER=llvmpipe
+GSK_RENDERER=cairo

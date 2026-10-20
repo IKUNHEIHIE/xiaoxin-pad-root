@@ -1,0 +1,27 @@
+#!/bin/sh
+set -eu
+fallback() {
+    printf 'compat\n' > /run/tb128-touch-mode
+    logger -t tb128-touch-poll 'Continuous input unavailable; using original input compatibility'
+    systemctl --no-block start tb128-touch-compat
+    exit 0
+}
+if [ -d /sys/module/tb128_touch_poll ]; then
+    printf 'poll\n' > /run/tb128-touch-mode
+    exit 0
+fi
+# Wait for the native zero-flash firmware update to finish before taking over.
+ready=0
+for i in $(seq 1 80); do
+    if grep -Eq '^FW_VER = 0x[0-9A-Fa-f]*[1-9A-Fa-f]' /proc/android_touch/vendor 2>/dev/null; then
+        ready=1
+        break
+    fi
+    sleep .25
+done
+[ "$ready" = 1 ] || fallback
+sleep .25
+irq=$(awk '/himax_tp/ {gsub(":", "", $1); print $1; exit}' /proc/interrupts)
+case "$irq" in ''|*[!0-9]*) fallback;; esac
+insmod /usr/local/lib/tb128-input/tb128_touch_poll.ko touch_irq="$irq" || fallback
+printf 'poll\n' > /run/tb128-touch-mode

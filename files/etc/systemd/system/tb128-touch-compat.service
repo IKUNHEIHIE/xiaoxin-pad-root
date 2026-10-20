@@ -1,0 +1,19 @@
+[Unit]
+Description=TB128FU temporary single-finger input compatibility
+After=greetd.service
+PartOf=greetd.service
+StartLimitIntervalSec=60
+StartLimitBurst=20
+
+[Service]
+Environment=XDG_RUNTIME_DIR=/run/user/1000
+Environment=WAYLAND_DISPLAY=wayland-0
+Environment=PYTHONFAULTHANDLER=1
+ExecStartPre=/usr/bin/test -S /run/user/1000/wayland-0
+ExecStart=/usr/bin/python3 -u /usr/local/sbin/tb128-touch-compat
+Restart=on-failure
+RestartSec=2
+TimeoutStopSec=3
+
+[Install]
+WantedBy=greetd.service

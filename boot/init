@@ -1,0 +1,55 @@
+#!/bin/busybox sh
+export PATH=/bin:/sbin
+/bin/busybox --install -s /bin
+mount -t devtmpfs devtmpfs /dev
+mount -t proc proc /proc
+mount -t sysfs sysfs /sys
+mount -t tmpfs -o mode=755,nosuid,nodev tmpfs /run
+exec </dev/console >/dev/console 2>&1
+echo TB128FU_DEBIAN13_EARLY_INIT
+insmod /lib/modules/qcom-pon.ko
+insmod /lib/modules/spi-geni-qcom.ko
+mkdir -p /sys/kernel/config /newroot
+mount -t configfs none /sys/kernel/config
+G=/sys/kernel/config/usb_gadget/tb128
+mkdir -p "$G"
+echo 0x0525 > "$G/idVendor"
+echo 0xa4a7 > "$G/idProduct"
+echo 0x0200 > "$G/bcdUSB"
+mkdir -p "$G/strings/0x409" "$G/configs/c.1/strings/0x409"
+echo TB128DIAG > "$G/strings/0x409/serialnumber"
+echo Lenovo > "$G/strings/0x409/manufacturer"
+echo 'Debian 13 tablet console' > "$G/strings/0x409/product"
+echo 'ACM serial' > "$G/configs/c.1/strings/0x409/configuration"
+echo 100 > "$G/configs/c.1/MaxPower"
+mkdir -p "$G/functions/acm.usb0"
+[ ! -e "$G/functions/acm.usb0/console" ] || echo 1 > "$G/functions/acm.usb0/console"
+ln -s "$G/functions/acm.usb0" "$G/configs/c.1/acm.usb0"
+for controller in /sys/class/udc/*; do
+    [ -e "$controller" ] || continue
+    echo "${controller##*/}" > "$G/UDC"
+    break
+done
+emergency() {
+    echo "DEBIAN_INIT_FAILURE: $1"
+    ( sleep 180; /sbin/reboot-bootloader ) &
+    if [ -c /dev/ttyGS0 ]; then
+        /bin/sh </dev/ttyGS0 >/dev/ttyGS0 2>&1 &
+    fi
+    while :; do sleep 5; done
+}
+for attempt in $(seq 1 60); do
+    [ -b /dev/sda18 ] && break
+    sleep 1
+done
+[ -b /dev/sda18 ] || emergency 'userdata block device absent'
+blkid /dev/sda18 | grep -q 'LABEL="debian13-pad"' || emergency 'Debian filesystem label missing'
+mount -t ext4 -o ro /dev/sda18 /newroot || emergency 'Debian filesystem mount failed'
+grep -q '^ID=debian$' /newroot/etc/os-release || emergency 'Unexpected root system'
+grep -q '^VERSION_ID="13"$' /newroot/etc/os-release || emergency 'Unexpected Debian version'
+[ -x /newroot/sbin/init ] || emergency 'System init absent'
+echo TB128FU_DEBIAN13_SWITCH_ROOT
+for name in dev proc sys run; do
+    mount --move "/$name" "/newroot/$name" || emergency 'Virtual filesystem move failed'
+done
+exec switch_root -c /dev/console /newroot /sbin/init

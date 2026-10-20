@@ -1,0 +1,13 @@
+#!/usr/bin/python3
+import subprocess
+patterns=('gpu_cc_pll0 failed','gpu fault ring','hangcheck detected gpu lockup','cx gdsc didn\'t collapse')
+with subprocess.Popen(['journalctl','-k','-f','-n','0','-o','cat'],stdout=subprocess.PIPE,text=True) as journal:
+    try:
+        for line in journal.stdout:
+            if any(p in line.lower() for p in patterns):
+                print('GPU_FAULT_FALLBACK',line.strip(),flush=True)
+                subprocess.run(['/usr/local/sbin/tb128-gpu-fallback'],check=True)
+                break
+    finally:
+        journal.terminate()
+        journal.wait()

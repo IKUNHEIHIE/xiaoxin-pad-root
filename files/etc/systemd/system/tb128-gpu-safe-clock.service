@@ -1,0 +1,12 @@
+[Unit]
+Description=TB128FU conservative GPU frequency limit
+Before=greetd.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/tb128-gpu-safe-clock
+RemainAfterExit=yes
+TimeoutStartSec=25
+
+[Install]
+WantedBy=greetd.service

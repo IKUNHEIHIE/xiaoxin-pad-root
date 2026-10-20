@@ -1,0 +1,42 @@
+#!/bin/sh
+# SPDX-License-Identifier: MIT
+# Publication rewrite of the documented configfs sequence, not a new device test.
+set -eu
+gadget=/sys/kernel/config/usb_gadget/tb128
+mountpoint=/sys/kernel/config
+mkdir -p "$mountpoint"
+if [ ! -d "$mountpoint/usb_gadget" ]; then
+    mount -t configfs configfs "$mountpoint"
+fi
+mkdir -p "$gadget"
+# The verified early /init usually leaves an already-bound console.
+[ -z "$(cat "$gadget/UDC")" ] || exit 0
+printf '0x0525' > "$gadget/idVendor"
+printf '0xa4a7' > "$gadget/idProduct"
+mkdir -p "$gadget/strings/0x409" "$gadget/configs/c.1/strings/0x409"
+printf 'TB128DIAG' > "$gadget/strings/0x409/serialnumber"
+printf 'Lenovo' > "$gadget/strings/0x409/manufacturer"
+printf 'Debian tablet console' > "$gadget/strings/0x409/product"
+printf 'ACM serial' > "$gadget/configs/c.1/strings/0x409/configuration"
+printf '100' > "$gadget/configs/c.1/MaxPower"
+mkdir -p "$gadget/functions/acm.usb0"
+if [ -e "$gadget/functions/acm.usb0/console" ]; then
+    printf '1' > "$gadget/functions/acm.usb0/console"
+fi
+link="$gadget/configs/c.1/acm.usb0"
+if [ -L "$link" ] && [ "$(readlink "$link")" != "$gadget/functions/acm.usb0" ]; then
+    rm -- "$link"
+fi
+[ -L "$link" ] || ln -s "$gadget/functions/acm.usb0" "$link"
+attempt=0
+while [ "$attempt" -lt 60 ]; do
+    for controller in /sys/class/udc/*; do
+        [ -e "$controller" ] || continue
+        printf '%s' "${controller##*/}" > "$gadget/UDC"
+        exit 0
+    done
+    attempt=$((attempt + 1))
+    sleep 1
+done
+echo 'No USB device controller became available' >&2
+exit 1

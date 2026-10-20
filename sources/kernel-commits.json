@@ -1,0 +1,14 @@
+{
+  "release_commit": "1334abd31ef30a6dfadd57c7fa9b0a3c6217607e",
+  "module_build_reference": "bd4ad8882d7c500cba79db8b35501960febf0f11",
+  "commits": [
+    {
+      "sha": "7dd2c179d6b3fecf9dd6670013fc01fe746b2188",
+      "message": "clk: qcom: fix SM6225 GPU PLL frequency programming"
+    },
+    {
+      "sha": "bd4ad8882d7c500cba79db8b35501960febf0f11",
+      "message": "input: himax: preserve contacts across empty frames"
+    }
+  ]
+}

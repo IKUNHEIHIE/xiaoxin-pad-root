@@ -1,0 +1,92 @@
+{
+  "recorded_at": "2026-10-21",
+  "note": "null sha256 means not independently content-hashed here; use the pinned commit and verify your download. Tested describes historical local use, not current availability or a new full-kernel test.",
+  "downloads": [
+    {
+      "id": "upstream-boot",
+      "kind": "upstream-binary-not-redistributed",
+      "tested": true,
+      "url": "https://github.com/dys0re/linux-next/releases/download/tb128fu-hx83102-20260908/boot-tb128fu-hx83102-gpu-wifi.img",
+      "size": 63418368,
+      "sha256": "00889e28f9bed168a7aae4e4dbe65b69c8e54aeccdbaae162214894543ee74ae"
+    },
+    {
+      "id": "kernel-release-source",
+      "kind": "source",
+      "tested": true,
+      "url": "https://github.com/dys0re/linux-next/archive/1334abd31ef30a6dfadd57c7fa9b0a3c6217607e.tar.gz",
+      "commit": "1334abd31ef30a6dfadd57c7fa9b0a3c6217607e",
+      "sha256": null
+    },
+    {
+      "id": "kernel-module-reference-source",
+      "kind": "source",
+      "tested": "external-module-build-only",
+      "url": "https://github.com/dys0re/linux-next/archive/bd4ad8882d7c500cba79db8b35501960febf0f11.tar.gz",
+      "commit": "bd4ad8882d7c500cba79db8b35501960febf0f11",
+      "sha256": null
+    },
+    {
+      "id": "gpu-pll-later-patch",
+      "kind": "patch",
+      "tested": false,
+      "url": "https://github.com/dys0re/linux-next/commit/7dd2c179d6b3fecf9dd6670013fc01fe746b2188.patch",
+      "commit": "7dd2c179d6b3fecf9dd6670013fc01fe746b2188",
+      "sha256": null
+    },
+    {
+      "id": "himax-later-patch",
+      "kind": "patch",
+      "tested": false,
+      "url": "https://github.com/dys0re/linux-next/commit/bd4ad8882d7c500cba79db8b35501960febf0f11.patch",
+      "commit": "bd4ad8882d7c500cba79db8b35501960febf0f11",
+      "sha256": null
+    },
+    {
+      "id": "gtk-touch-serial-patch",
+      "kind": "patch",
+      "tested": true,
+      "url": "https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/5628.patch",
+      "local_path": "patches/gtk3-preserve-touch-serial.patch",
+      "sha256": "0b4cc0f5306ae18856a9b40e86e7b5c3fffa5eda2ddc736df43d6bbaa2976f25"
+    },
+    {
+      "id": "gtk-orig",
+      "kind": "source",
+      "tested": true,
+      "url": "https://deb.debian.org/debian/pool/main/g/gtk+3.0/gtk+3.0_3.24.49.orig.tar.xz",
+      "sha256": "5ea52c6a28f0e5ecf2e9a3c2facbb30d040b73871fcd5f33cd1317e9018a146e"
+    },
+    {
+      "id": "gtk-debian",
+      "kind": "source",
+      "tested": true,
+      "url": "https://deb.debian.org/debian/pool/main/g/gtk+3.0/gtk+3.0_3.24.49-3.debian.tar.xz",
+      "sha256": "0d20b6ef612ca462929f0f27ad0e359881938a7e44088687f2ce632a4bc0fcd7"
+    },
+    {
+      "id": "gtk-dsc",
+      "kind": "source",
+      "tested": true,
+      "url": "https://deb.debian.org/debian/pool/main/g/gtk+3.0/gtk+3.0_3.24.49-3.dsc",
+      "sha256": "513599dc090f48106d1e2fc4d570c4d6e682e52e0ce6c059ea0218f624d48e22"
+    },
+    {
+      "id": "stock-firmware",
+      "kind": "proprietary-not-redistributed",
+      "tested": true,
+      "url": "https://mirrors.lolinet.com/firmware/lenowow/2022/Tab_M10_Plus_3rd_Gen/TB128FU_CN/TB128FU_CN_OPEN_USER_Q00126_T_ZUI_15.0.619_ST_240531.7z",
+      "size": 4167763384,
+      "sha256": "d82d66f6dfd70250da3b7b79fa84e6d900f2e80c5bd931fb1ebfa6dafa6ec268"
+    },
+    {
+      "id": "historical-unlock-image",
+      "kind": "signed-vendor-image-not-redistributed",
+      "tested": true,
+      "url": "http://cdn.zui.lenovomm.com/developer/tabletboot/HAHAHAHA/sn.img",
+      "size": 5386,
+      "sha256": "fe6785fe49baadd74f221bc135b6d0caff14c68e5de2dc17c00d89609504e294",
+      "note": "Historical HTTP endpoint. Verify exact checksum and signature; never assume availability/trust from HTTP success."
+    }
+  ]
+}

@@ -1,0 +1,2 @@
+#!/bin/sh
+if [ -d /sys/module/tb128_touch_poll ]; then rmmod tb128_touch_poll; fi

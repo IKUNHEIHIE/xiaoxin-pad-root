@@ -1,0 +1,14 @@
+[Desktop Entry]
+Type=Application
+Name=Phone Shell
+Exec=/usr/local/bin/tb128-phosh-startup-fixed -U
+Categories=System;GNOME;GTK;Core;
+OnlyShowIn=GNOME;
+NoDisplay=true
+Icon=mobi.phosh.Shell
+X-GNOME-Autostart-Phase=DisplayServer
+X-GNOME-Provides=panel;windowmanager;
+X-GNOME-Autostart-Notify=true
+X-GNOME-AutoRestart=true
+X-GNOME-HiddenUnderSystemd=true
+X-Phosh-UsesFeedback=true
