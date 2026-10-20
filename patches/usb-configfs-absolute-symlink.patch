@@ -1,13 +1,11 @@
 --- a/usr/local/sbin/tb128-usb-serial-gadget
 +++ b/usr/local/sbin/tb128-usb-serial-gadget
-@@ -26,9 +26,8 @@
+@@ -26,7 +26,7 @@
  mkdir -p configs/c.1/strings/0x409
  printf '%s' 'ACM serial' > configs/c.1/strings/0x409/configuration
  printf '%s' 100 > configs/c.1/MaxPower
 -[ -L configs/c.1/acm.usb0 ] || ln -s ../../functions/acm.usb0 configs/c.1/acm.usb0
 +[ -L configs/c.1/acm.usb0 ] || ln -s "$G/functions/acm.usb0" configs/c.1/acm.usb0
  
--
  retry=0
  while [ "$retry" -lt 60 ]; do
- 	for udc in "$UDC_DIR"/*; do

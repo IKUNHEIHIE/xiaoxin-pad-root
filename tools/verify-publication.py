@@ -33,6 +33,8 @@ def main():
         if path.suffix.lower() in BINARY_SUFFIXES or re.search(r'\.so(?:\.|$)', path.name):
             raise SystemExit('Disallowed artifact: ' + relative)
         payload = path.read_bytes()
+        if b'\r' in payload:
+            raise SystemExit('Non-LF line endings: ' + relative)
         if b'\x00' in payload or len(payload) > 1_000_000:
             raise SystemExit('Not a small source/config file: ' + relative)
         text = payload.decode('utf-8')
