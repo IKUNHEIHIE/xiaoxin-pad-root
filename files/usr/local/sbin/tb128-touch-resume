@@ -1,0 +1,139 @@
+#!/usr/bin/python3
+"""Recover zero-flash touch without deleting its virtual input device."""
+from collections import deque
+import fcntl
+import hashlib
+import logging
+import os
+from pathlib import Path
+import signal
+import subprocess
+import time
+
+COUNTERS = Path('/sys/module/tb128_touch_poll/parameters')
+BACKLIGHT = Path('/sys/class/backlight/5e94000.dsi.0/bl_power')
+FIRMWARE = Path('/lib/firmware/Himax_firmware.bin')
+FIRMWARE_SHA256 = 'a01412b250205099a372135f244a52252a0843e8293346ece672832acf0a4299'
+stopping = False
+logging.basicConfig(level=logging.INFO, format='%(message)s')
+
+
+def stop(signum, frame):
+    global stopping
+    stopping = True
+
+
+def wait_paused(wanted):
+    deadline = time.monotonic() + 3
+    while time.monotonic() < deadline:
+        if (COUNTERS / 'paused').read_text().strip() == wanted:
+            return
+        time.sleep(.02)
+    raise TimeoutError('Touch worker did not acknowledge pause state ' + wanted)
+
+
+def native_input():
+    for name in Path('/sys/class/input').glob('event*/device/name'):
+        if name.read_text().strip() == 'himax-touchscreen':
+            return '/dev/input/' + name.parents[1].name
+    raise OSError('Native touch input is absent')
+
+
+def recover():
+    if hashlib.sha256(FIRMWARE.read_bytes()).hexdigest() != FIRMWARE_SHA256:
+        raise OSError('Firmware differs from the verified TB128FU image')
+    if not (COUNTERS / 'pause').is_file():
+        raise OSError('In-place pause support is absent; refusing input hotplug')
+    logging.warning('Restoring touch SRAM while retaining the same input device')
+    fd = os.open(native_input(), os.O_RDONLY | os.O_NONBLOCK)
+    grabbed = False
+    try:
+        # Suppress the native driver's transient recovery events only; kernel
+        # IRQ and ESD handling continue. No coordinates or key events are read.
+        fcntl.ioctl(fd, 0x40044590, 1)
+        grabbed = True
+        (COUNTERS / 'pause').write_text('1\n')
+        wait_paused('Y')
+        # This driver's HX_ZERO_FLASH path writes controller SRAM, not flash.
+        # Full reload is deterministic; sense-on alone relied on an ESD IRQ race.
+        subprocess.run(['timeout', '12', '/bin/sh', '-c',
+                        "printf 't,Himax_firmware.bin\\n' > /proc/android_touch/debug"],
+                       check=True, timeout=14)
+        time.sleep(.15)
+    finally:
+        try:
+            if (COUNTERS / 'pause').exists():
+                (COUNTERS / 'pause').write_text('0\n')
+                wait_paused('N')
+        finally:
+            if grabbed:
+                fcntl.ioctl(fd, 0x40044590, 0)
+            os.close(fd)
+    logging.info('Touch SRAM restored; original virtual input retained')
+
+
+def snapshot():
+    return {name: int((COUNTERS / name).read_text())
+            for name in ('frames', 'bad_crc', 'errors')}
+
+
+def main():
+    previous = None
+    previous_on = None
+    bad_intervals = 0
+    attempts = deque()
+    while not stopping:
+        time.sleep(1)
+        try:
+            current = snapshot()
+            on = BACKLIGHT.read_text().strip() == '0'
+        except (OSError, ValueError):
+            previous = None
+            previous_on = None
+            bad_intervals = 0
+            continue
+        woke = on and previous_on is not True
+        previous_on = on
+        if woke:
+            try:
+                recover()
+            except (OSError, subprocess.SubprocessError):
+                logging.exception('Touch wake recovery failed; input device was retained')
+            previous = None
+            bad_intervals = 0
+            attempts.clear()
+            continue
+        if previous is None or any(current[key] < previous[key] for key in current):
+            previous = current
+            continue
+        delta = {key: current[key] - previous[key] for key in current}
+        previous = current
+        corrupt = delta['bad_crc'] + delta['errors']
+        # All-zero FIFO reads are normal when idle. They must never trigger
+        # repeated firmware resets while the display remains on.
+        if on and delta['frames'] >= 20 and corrupt >= .95 * delta['frames']:
+            bad_intervals += 1
+        else:
+            bad_intervals = 0
+            if on and delta['frames'] >= 20 and corrupt <= .05 * delta['frames']:
+                attempts.clear()
+        if bad_intervals < 2:
+            continue
+        now = time.monotonic()
+        while attempts and now - attempts[0] > 600:
+            attempts.popleft()
+        if attempts and (now - attempts[-1] < 20 or len(attempts) >= 3):
+            continue
+        attempts.append(now)
+        bad_intervals = 0
+        try:
+            recover()
+        except (OSError, subprocess.SubprocessError):
+            logging.exception('Touch recovery failed; boot and firmware files were not changed')
+        previous = None
+
+
+if __name__ == '__main__':
+    signal.signal(signal.SIGTERM, stop)
+    signal.signal(signal.SIGINT, stop)
+    main()

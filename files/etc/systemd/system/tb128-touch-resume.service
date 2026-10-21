@@ -1,0 +1,13 @@
+[Unit]
+Description=Recover TB128FU touch sensing after display power cycling
+After=greetd.service tb128-touch-poll.service
+ConditionPathExists=/proc/android_touch/debug
+
+[Service]
+Type=simple
+ExecStart=/usr/local/sbin/tb128-touch-resume
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

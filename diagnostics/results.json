@@ -68,5 +68,42 @@
     "long-term thermals/battery/charging",
     "reliable deep suspend",
     "multi-touch beyond primary single-finger use"
-  ]
+  ],
+  "display_resume": {
+    "module_sha256": "d29ca41cc9b22d9e784a2868c53c2253392d83487889ef1ac119a39ec05d292c",
+    "checked_imports": 30,
+    "software_power_cycles": 3,
+    "input_device_identity_retained": true,
+    "completed_sram_recoveries_per_wake": [
+      1,
+      1,
+      1
+    ],
+    "stable_samples": [
+      {
+        "frames": 109,
+        "zero_fifo": 110,
+        "bad_checksum": 0,
+        "bus_errors": 0
+      },
+      {
+        "frames": 105,
+        "zero_fifo": 105,
+        "bad_checksum": 0,
+        "bus_errors": 0
+      },
+      {
+        "frames": 102,
+        "zero_fifo": 102,
+        "bad_checksum": 0,
+        "bus_errors": 0
+      }
+    ],
+    "scope": "Counters are separate sysfs reads, not atomic snapshots. Idle zero reads are not touch points. User confirmed sliding after physical wake retest. No full-device reboot was repeated for this module.",
+    "failed_approaches": [
+      "input hotplug on each recovery",
+      "sense-on relying on native ESD timing",
+      "treating idle zero FIFO as corruption"
+    ]
+  }
 }

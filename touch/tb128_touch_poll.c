@@ -16,6 +16,8 @@ static struct task_struct *worker;
 static struct input_dev *touch;
 static unsigned int touch_irq = 120;
 static unsigned long frames, points, motion, releases, bad_crc, errors;
+static unsigned long valid_frames, invalid_frames, zeros;
+static bool pause, paused;
 module_param(touch_irq, uint, 0444);
 module_param(frames, ulong, 0444);
 module_param(points, ulong, 0444);
@@ -23,6 +25,11 @@ module_param(motion, ulong, 0444);
 module_param(releases, ulong, 0444);
 module_param(bad_crc, ulong, 0444);
 module_param(errors, ulong, 0444);
+module_param(valid_frames, ulong, 0444);
+module_param(invalid_frames, ulong, 0444);
+module_param(zeros, ulong, 0444);
+module_param(pause, bool, 0644);
+module_param(paused, bool, 0444);
 
 static void release_touch(void)
 {
@@ -44,7 +51,28 @@ static int poll_touch(void *unused)
 	unsigned long last_good = jiffies;
 	while (!kthread_should_stop()) {
 		unsigned int sum = 0, zero = 0, i, count, valid = 0;
-		int ret = himax_bus_read(0x30, packet, sizeof(packet), 3);
+		int ret;
+		if (READ_ONCE(pause)) {
+			if (!READ_ONCE(paused)) {
+				release_touch();
+				active = false;
+				WRITE_ONCE(paused, true);
+			}
+			usleep_range(20000, 22000);
+			continue;
+		}
+		if (READ_ONCE(paused)) {
+			/* Debug recovery may have restored the native IRQ. Hold an
+			 * independent IRQ-disable reference until any handler finishes,
+			 * then return ownership to polling without removing input_dev.
+			 */
+			disable_irq(touch_irq);
+			himax_int_enable(0);
+			enable_irq(touch_irq);
+			last_good = jiffies;
+			WRITE_ONCE(paused, false);
+		}
+		ret = himax_bus_read(0x30, packet, sizeof(packet), 3);
 		frames++;
 		if (ret) {
 			errors++;
@@ -54,8 +82,10 @@ static int poll_touch(void *unused)
 			sum += packet[i];
 			zero += packet[i] == 0;
 		}
-		if (zero == 56)
+		if (zero == 56) {
+			zeros++;
 			goto invalid;
+		}
 		if (sum & 0xff) {
 			bad_crc++;
 			goto invalid;
@@ -66,6 +96,7 @@ static int poll_touch(void *unused)
 			goto invalid;
 		}
 		last_good = jiffies;
+		valid_frames++;
 		for (i = 0; i < 10; i++) {
 			u16 x = ((u16)packet[4*i] << 8) | packet[4*i+1];
 			u16 y = ((u16)packet[4*i+2] << 8) | packet[4*i+3];
@@ -96,6 +127,7 @@ static int poll_touch(void *unused)
 		active = valid != 0;
 		goto next;
 invalid:
+		invalid_frames++;
 		/* Missing/corrupt FIFO entries must not leave a finger held forever. */
 		if (active && time_after(jiffies, last_good + msecs_to_jiffies(100))) {
 			release_touch();
