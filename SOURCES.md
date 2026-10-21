@@ -92,3 +92,15 @@
 - 历史公共签名解锁镜像地址：`http://cdn.zui.lenovomm.com/developer/tabletboot/HAHAHAHA/sn.img`，5386 bytes，SHA256 `fe6785fe49baadd74f221bc135b6d0caff14c68e5de2dc17c00d89609504e294`。该地址为 HTTP；本机做过离线签名校验，不能只凭下载成功认定可信或当前仍可用。
 
 本仓库不托管 proprietary firmware、签名解锁镜像、EDL programmer 或用户分区。解锁历史与恢复限制见 [恢复文档](docs/recovery.md)，不要照抄本机扇区地址到另一台设备。
+
+## 7. 蓝牙与相机诊断参考（尚未形成可用适配）
+
+- 原厂内核固定提交：[lenovo-sm6225-devs/android_kernel_lenovo_sm6225，2312af65…](https://github.com/lenovo-sm6225-devs/android_kernel_lenovo_sm6225/tree/2312af65d285ed22a47709747bd66beb876065ab)。对照UART半采样、BT供电、CCI时序、TFE530/CSID530与CSIPHY1.2.1实际工作表；不是直接加载Android模块。
+- 原厂用户态相机模块元数据：[固定dump提交901ef08a…的相机目录](https://github.com/lenovo-sm6225-devs/lenovo_tb128fu_dump/tree/901ef08a03c8399b7ba909eb2a31e68fd66eb512/vendor/lib64/camera)。只提取候选身份与供电事实，未执行这些库，不在本仓库再分发。后摄实际读到的ID独立于元数据候选。
+- 同SoC蓝牙参考：[Damir00109/Redmi10c 固定补丁下载](https://raw.githubusercontent.com/Damir00109/Redmi10c/ebe10a8471e5a43f6bdfd08a30ebe4493a28d08e/patches/bt-wcn3990-20260902.patch)。另一设备作者的可用声明不代表TB128FU已成功；本机仍初始化超时。
+- 主线初版TFE340：[提交acf8d084…](https://github.com/torvalds/linux/commit/acf8d084699e1b5ed7ca0fbc01a6e3f63d10a0df)，[补丁下载](https://github.com/torvalds/linux/commit/acf8d084699e1b5ed7ca0fbc01a6e3f63d10a0df.patch)，SHA256 `2cdda0d654b3cbd52bbebf2ebe6505dd3f635f070c48a969ee99cb6b75a733d0`。
+- 主线初版CSID340：[提交f0fc808a…](https://github.com/torvalds/linux/commit/f0fc808a466a544420807df2c7a42f7bc322d245)，[补丁下载](https://github.com/torvalds/linux/commit/f0fc808a466a544420807df2c7a42f7bc322d245.patch)，SHA256 `7db2b2254671aadc3a7b96f968870b953510959e82808da3c6def4080f8d96df`。
+- 主线QCM2290资源：[提交9e89149a…](https://github.com/torvalds/linux/commit/9e89149a19edb31b8ddbbeec055d22f7ff9d6ddf)，[补丁下载](https://github.com/torvalds/linux/commit/9e89149a19edb31b8ddbbeec055d22f7ff9d6ddf.patch)，SHA256 `e4bcbaa37d5f9f1b0763580816e730f4fe0f4daa64dd4d5d806092d44152b326`。其PHY、供电、时钟与板级资源不能照抄TB128FU。
+- TFE架构逆向参考：[作者说明](https://nondescriptpointer.com/articles/fairphone-6-wide-camera-linux/)、[Fairphone 6相机项目](https://github.com/nondescriptpointer/fairphone6-wide-camera-linux)。仅作TFE530/665及上游驱动架构对照，不把该机型补丁宣称为TB128FU补丁。
+
+下载哈希固定的是本次保存的原始补丁字节；GitHub以后若改变邮件包装，需检查实际差异。6.14回移需处理API与板级资源差异。[诊断记录](docs/bluetooth-camera.md)包含失败的供电别名试验和普通重启恢复；本仓库不提供该失败二进制或自动运行入口。
