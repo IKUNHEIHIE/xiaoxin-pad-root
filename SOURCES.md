@@ -39,6 +39,7 @@
 | 启动早期 USB、根系统检查 | [实际 `/init`](boot/init)、[重打包工具](tools/repack-boot.py) |
 | configfs 绝对符号链接 | [差异补丁](patches/usb-configfs-absolute-symlink.patch)、[修正脚本](files/usr/local/sbin/tb128-usb-serial-gadget) |
 | GTK3 应用启动通知 | 下面的上游补丁及 [私有库构建工具](tools/build-gtk-library.sh) |
+| 蓝牙RX复用、原厂身份及开机服务 | [完整源码](bluetooth/tb128_bt_uart.c)、[构建工具](tools/build-bluetooth-module.sh)、[已验证边界](docs/bluetooth.md) |
 
 这不是重新发明 Freedreno 或整套硬件内核；上游作者保留各自贡献的归属。
 
@@ -93,14 +94,25 @@
 
 本仓库不托管 proprietary firmware、签名解锁镜像、EDL programmer 或用户分区。解锁历史与恢复限制见 [恢复文档](docs/recovery.md)，不要照抄本机扇区地址到另一台设备。
 
-## 7. 蓝牙与相机诊断参考（尚未形成可用适配）
+## 7. 早期蓝牙与相机诊断参考
 
 - 原厂内核固定提交：[lenovo-sm6225-devs/android_kernel_lenovo_sm6225，2312af65…](https://github.com/lenovo-sm6225-devs/android_kernel_lenovo_sm6225/tree/2312af65d285ed22a47709747bd66beb876065ab)。对照UART半采样、BT供电、CCI时序、TFE530/CSID530与CSIPHY1.2.1实际工作表；不是直接加载Android模块。
 - 原厂用户态相机模块元数据：[固定dump提交901ef08a…的相机目录](https://github.com/lenovo-sm6225-devs/lenovo_tb128fu_dump/tree/901ef08a03c8399b7ba909eb2a31e68fd66eb512/vendor/lib64/camera)。只提取候选身份与供电事实，未执行这些库，不在本仓库再分发。后摄实际读到的ID独立于元数据候选。
-- 同SoC蓝牙参考：[Damir00109/Redmi10c 固定补丁下载](https://raw.githubusercontent.com/Damir00109/Redmi10c/ebe10a8471e5a43f6bdfd08a30ebe4493a28d08e/patches/bt-wcn3990-20260902.patch)。另一设备作者的可用声明不代表TB128FU已成功；本机仍初始化超时。
+- 同SoC蓝牙参考：[Damir00109/Redmi10c 固定补丁下载](https://raw.githubusercontent.com/Damir00109/Redmi10c/ebe10a8471e5a43f6bdfd08a30ebe4493a28d08e/patches/bt-wcn3990-20260902.patch)。作为FIFO/时序对照；本机后续成功依据的是自身GPIO11复用及地址配置验证，不能照搬另一设备的板级配置。
 - 主线初版TFE340：[提交acf8d084…](https://github.com/torvalds/linux/commit/acf8d084699e1b5ed7ca0fbc01a6e3f63d10a0df)，[补丁下载](https://github.com/torvalds/linux/commit/acf8d084699e1b5ed7ca0fbc01a6e3f63d10a0df.patch)，SHA256 `2cdda0d654b3cbd52bbebf2ebe6505dd3f635f070c48a969ee99cb6b75a733d0`。
 - 主线初版CSID340：[提交f0fc808a…](https://github.com/torvalds/linux/commit/f0fc808a466a544420807df2c7a42f7bc322d245)，[补丁下载](https://github.com/torvalds/linux/commit/f0fc808a466a544420807df2c7a42f7bc322d245.patch)，SHA256 `7db2b2254671aadc3a7b96f968870b953510959e82808da3c6def4080f8d96df`。
 - 主线QCM2290资源：[提交9e89149a…](https://github.com/torvalds/linux/commit/9e89149a19edb31b8ddbbeec055d22f7ff9d6ddf)，[补丁下载](https://github.com/torvalds/linux/commit/9e89149a19edb31b8ddbbeec055d22f7ff9d6ddf.patch)，SHA256 `e4bcbaa37d5f9f1b0763580816e730f4fe0f4daa64dd4d5d806092d44152b326`。其PHY、供电、时钟与板级资源不能照抄TB128FU。
 - TFE架构逆向参考：[作者说明](https://nondescriptpointer.com/articles/fairphone-6-wide-camera-linux/)、[Fairphone 6相机项目](https://github.com/nondescriptpointer/fairphone6-wide-camera-linux)。仅作TFE530/665及上游驱动架构对照，不把该机型补丁宣称为TB128FU补丁。
 
 下载哈希固定的是本次保存的原始补丁字节；GitHub以后若改变邮件包装，需检查实际差异。6.14回移需处理API与板级资源差异。[诊断记录](docs/bluetooth-camera.md)包含失败的供电别名试验和普通重启恢复；本仓库不提供该失败二进制或自动运行入口。
+
+## 8. 蓝牙已验证修复的来源与固件
+
+- [上游GENI UART源码](https://github.com/dys0re/linux-next/blob/bd4ad8882d7c500cba79db8b35501960febf0f11/drivers/tty/serial/qcom_geni_serial.c)，SHA256 `077f92d2931d229c385eb454e952321f1b0cd6a5c0c8a8142f4930b3593768c3`。
+- [同提交的pinctrl IRQ实现](https://github.com/dys0re/linux-next/blob/bd4ad8882d7c500cba79db8b35501960febf0f11/drivers/pinctrl/qcom/pinctrl-msm.c)，用于核对请求GPIO唤醒IRQ如何改变mux。
+- [QCA固件与地址检查](https://github.com/dys0re/linux-next/blob/bd4ad8882d7c500cba79db8b35501960febf0f11/drivers/bluetooth/btqca.c)，用于区分版本通信失败与NVM占位地址导致的unconfigured。
+- 本机 BlueZ 5.82；[官方版本源码](https://github.com/bluez/bluez/tree/5.82)。
+- [Debian firmware-atheros 20250410-2](https://packages.debian.org/trixie/firmware-atheros)，[官方包下载](https://deb.debian.org/debian/pool/non-free-firmware/f/firmware-nonfree/firmware-atheros_20250410-2_all.deb)，[官方校验页](https://packages.debian.org/trixie/all/firmware-atheros/download)。包大小29474828 bytes，官方SHA256 `8387a45e9307052858185620ab30efebbf9660b072d6c8309673bf112e291f35`；这里的包哈希来自Debian发布页，不冒称本次又完整下载核验了包。
+- 实际加载的 `qca/crbtfw21.tlv`、`qca/crnv21.bin` 已与初装rootfs中的上述包文件逐字节哈希对上，单文件哈希、源码/原型差异及设备验收见[蓝牙记录](docs/bluetooth.md)和[结构化记录](bluetooth/validation.json)。固件不在本仓库托管。
+
+公开驱动继承上游许可证；新增退役模式入口保护是发布整理差异，仅编译检查，未换入当前平板。本文不把公开整理版、实机原型和完整新内核刷写混称为同一验证对象。

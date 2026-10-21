@@ -1,0 +1,41 @@
+{
+  "recorded_at": "2026-10-21",
+  "kernel_release": "6.14.0-rc5-next-20250306-tb128fu+",
+  "running_kernel_source": "1334abd31ef30a6dfadd57c7fa9b0a3c6217607e",
+  "module_reference_source": "bd4ad8882d7c500cba79db8b35501960febf0f11",
+  "upstream_uart_source_sha256": "077f92d2931d229c385eb454e952321f1b0cd6a5c0c8a8142f4930b3593768c3",
+  "tested_uart_source_sha256": "a67ca37d49d1c5b18b44ba5f79cd742c0e52b101a2267fb656e251264013a684",
+  "published_uart_source_sha256": "f990abbb8caab3f0cd5e886d47ab549744f0e66016dc0245d128c4e2b0f2cb8c",
+  "tested_private_module_sha256": "90cdd40f1e93dc823ce5039696c7d1cd9ccbe8af7a5cd19021c3d256c620c781",
+  "published_source_device_tested": false,
+  "publication_difference": "Reject both retired diagnostic modes before any side effects; normal false/false path unchanged. Published copy is build-checked, not installed on the tablet.",
+  "controller": {
+    "product_id": "0x0a",
+    "soc_version": "0x40020150",
+    "rom_version": "0x0201"
+  },
+  "firmware": {
+    "qca/crbtfw21.tlv": "62ce092b55e5d4bd511a637b3d8b5d56bc9fb39b5fa9639ea0a54f161daff144",
+    "qca/crnv21.bin": "274ac49ab207200629a4324cd9665184fc9339618c0ee78fa978f86bab20cfcd"
+  },
+  "validation": {
+    "version_reply": true,
+    "firmware_loaded": true,
+    "discovery": true,
+    "user_confirmed_connection": true,
+    "paired": true,
+    "trusted": true,
+    "services_resolved": true,
+    "warm_reboot_persistence": true,
+    "reconnect_after_reboot": true,
+    "automatic_remote_reconnect_verified": false,
+    "audio_playback_tested": false,
+    "deep_suspend_wake_tested": false
+  },
+  "warm_boot_transport_ready_seconds": 17.38,
+  "personal_identifiers": "Omitted; factory address stays only on the owner device.",
+  "published_source_build_checked": true,
+  "published_imports_match_tested": true,
+  "published_uart_import_count": 104,
+  "public_start_helper_difference": "Verify module.sha256 from the new build rather than hardcoding the historical private binary hash."
+}

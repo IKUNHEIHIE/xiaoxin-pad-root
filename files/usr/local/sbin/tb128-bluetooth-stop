@@ -1,0 +1,6 @@
+#!/bin/bash
+# SPDX-License-Identifier: MIT
+set -euo pipefail
+if test -d /sys/module/tb128_bt_uart; then
+    /usr/sbin/rmmod tb128_bt_uart
+fi

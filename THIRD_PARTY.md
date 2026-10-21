@@ -5,6 +5,7 @@ The top-level MIT license covers original project documentation and original use
 | Material | Origin / credit | License / treatment |
 | --- | --- | --- |
 | `touch/tb128_touch_poll.c`, Kbuild | Original workaround for this experiment; calls existing Himax exported API | GPL-2.0-only; [text](LICENSES/GPL-2.0-only.txt). Existing `GPL-2.0` SPDX spelling is retained from the tested source |
+| `bluetooth/tb128_bt_uart.c`, UART comparison/guard patches | Derived from Linux Foundation GENI UART driver in pinned dys0re/linux-next; original copyright retained, plus this board-specific experimental adaptation | GPL-2.0; original `GPL-2.0` SPDX and GPL module notice retained. [Source and tested/publication differences](docs/bluetooth.md) |
 | Kernel config and imported-symbol list | Running upstream Linux release / tested module build | Linux kernel context, GPL-2.0; upstream component notices still apply |
 | `patches/gtk3-preserve-touch-serial.patch` | Guido Günther, GNOME/gtk MR5628; original author and commit header retained | GTK3 GDK, LGPL-2.1-or-later; [text](LICENSES/LGPL-2.1-or-later.txt). Source URLs and matching Debian source checksums in [SOURCES.md](SOURCES.md) |
 | `protocols/wlr-virtual-pointer-unstable-v1.xml` | Josef Gajdusek, wlr-protocols | MIT notice embedded in the XML, preserved verbatim |

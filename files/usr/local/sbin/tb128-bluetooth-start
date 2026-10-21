@@ -1,0 +1,47 @@
+#!/bin/bash
+# SPDX-License-Identifier: MIT
+set -euo pipefail
+export LC_ALL=C
+test "$(uname -r)" = '6.14.0-rc5-next-20250306-tb128fu+'
+cd /usr/local/lib/tb128-bluetooth
+sha256sum -c module.sha256
+modprobe hci_uart
+python3 - <<'PY'
+from pathlib import Path
+exports={r.split()[2] for r in Path('/proc/kallsyms').read_text().splitlines() if len(r.split())>=3}
+required=Path('undefined-symbols.txt').read_text().split()
+missing=[s for s in required if '__ksymtab_'+s not in exports]
+assert not missing, 'Kernel exports do not match: '+repr(missing)
+PY
+if ! test -d /sys/module/tb128_bt_uart; then
+    insmod ./tb128_bt_uart.ko force_rfr_ready=0
+fi
+test "$(cat /sys/module/tb128_bt_uart/parameters/force_rfr_ready)" = N
+python3 - <<'PY'
+from pathlib import Path
+import re, subprocess, time
+address_file=Path('/root/tb128-bluetooth-private/factory-address')
+address=address_file.read_text().strip().upper()
+assert re.fullmatch(r'(?:[0-9A-F]{2}:){5}[0-9A-F]{2}',address)
+assert not int(address[:2],16)&1
+assert address not in ('00:00:00:00:00:00','FF:FF:FF:FF:FF:FF','39:90:21:64:07:00')
+deadline=time.monotonic()+45
+last='controller not yet available'
+while time.monotonic()<deadline:
+ hci=Path('/sys/class/bluetooth/hci0')
+ if hci.exists():
+  assert '/4a8c000.serial/' in str(hci.resolve()), 'hci0 belongs to another transport'
+  r=subprocess.run(['hciconfig','hci0'],capture_output=True,text=True,timeout=4)
+  if address in r.stdout.upper():
+   print('TB128 Bluetooth ready with factory identity')
+   break
+  r=subprocess.run(['btmgmt','--index','0','config'],capture_output=True,text=True,timeout=4)
+  if 'missing options: public-address' in r.stdout:
+   r=subprocess.run(['btmgmt','--index','0','public-addr',address],capture_output=True,text=True,timeout=15)
+   last=re.sub(r'(?:[0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}','[ADDRESS]',r.stdout+r.stderr)
+   if r.returncode:
+    raise RuntimeError('Factory identity configuration failed: '+last)
+ time.sleep(.5)
+else:
+ raise RuntimeError('Timed out waiting for configured Bluetooth controller: '+last)
+PY

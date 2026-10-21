@@ -1,0 +1,16 @@
+--- corrected-fifo/tb128_bt_uart.c
++++ no-wake/tb128_bt_uart.c
+@@ -1791,7 +1791,12 @@
+ 	uport->has_sysrq = IS_ENABLED(CONFIG_SERIAL_QCOM_GENI_CONSOLE);
+ 
+ 	if (!data->console)
+-		port->wakeup_irq = platform_get_irq_optional(pdev, 1);
++		/* TB128's second IRQ is TLMM GPIO11, also the UART RX pad.
++         * Requesting it invokes msm_gpio_irq_reqres(), which switches this
++         * pad back to GPIO after the default UART mux was selected. Do not
++         * request it in this awake-only comparison; leave RX on qup3.
++         */
++        port->wakeup_irq = -ENXIO;
+ 
+ 	if (of_property_read_bool(pdev->dev.of_node, "rx-tx-swap"))
+ 		port->rx_tx_swap = true;

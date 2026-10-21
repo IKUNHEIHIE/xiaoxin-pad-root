@@ -1,0 +1,20 @@
+# SPDX-License-Identifier: MIT
+[Unit]
+Description=TB128FU Bluetooth UART transport and factory identity
+After=systemd-udevd.service systemd-modules-load.service tb128-touch-poll.service
+Before=bluetooth.service
+ConditionPathExists=/sys/bus/platform/devices/4a8c000.serial
+StartLimitIntervalSec=0
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/tb128-bluetooth-start
+ExecStopPost=/usr/local/sbin/tb128-bluetooth-stop
+TimeoutStartSec=80
+TimeoutStopSec=20
+Restart=on-failure
+RestartSec=8
+
+[Install]
+WantedBy=multi-user.target

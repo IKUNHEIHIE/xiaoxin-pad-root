@@ -87,6 +87,16 @@
       "size": 5386,
       "sha256": "fe6785fe49baadd74f221bc135b6d0caff14c68e5de2dc17c00d89609504e294",
       "note": "Historical HTTP endpoint. Verify exact checksum and signature; never assume availability/trust from HTTP success."
+    },
+    {
+      "id": "bluetooth-firmware-atheros",
+      "kind": "vendor-firmware-in-debian-not-redistributed",
+      "tested": "Installed package and individual QCA firmware files matched the tested rootfs; package SHA256 below is Debian-published metadata.",
+      "version": "20250410-2",
+      "url": "https://deb.debian.org/debian/pool/non-free-firmware/f/firmware-nonfree/firmware-atheros_20250410-2_all.deb",
+      "size": 29474828,
+      "sha256": "8387a45e9307052858185620ab30efebbf9660b072d6c8309673bf112e291f35",
+      "checksum_source": "https://packages.debian.org/trixie/all/firmware-atheros/download"
     }
   ]
 }

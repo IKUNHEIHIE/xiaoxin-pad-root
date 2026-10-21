@@ -1,0 +1,12 @@
+#!/bin/bash
+# SPDX-License-Identifier: MIT
+set -euo pipefail
+if systemctl --quiet is-active serial-getty@ttyGS0.service; then
+    exit 0
+fi
+test -c /dev/ttyGS0
+# The gadget was created in the initramfs. Reannounce its existing tty after
+# root-system udev is ready, then retry a getty dependency job that timed out.
+udevadm trigger --action=add --subsystem-match=tty --sysname-match=ttyGS0
+udevadm settle --timeout=5 || true
+systemctl --no-block start serial-getty@ttyGS0.service

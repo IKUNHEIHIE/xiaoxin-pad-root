@@ -14,7 +14,8 @@
 4. [触控、GPU、慢启动修复](docs/fixes.md)：先理解问题，再按顺序应用配置。
 5. [失败教训与排障表](docs/failures.md)：包括 Fastboot 循环、CrashDump、登录提示和坐标错位。
 6. [恢复与回退](docs/recovery.md)：区分 Android 尚在、userdata 已替换和 Linux 仍可访问三种情况。
-7. [蓝牙与相机诊断](docs/bluetooth-camera.md)：后摄识别、串口纠错、媒体框架试验及失败复盘；两项仍不可用。
+7. [蓝牙修复与构建](docs/bluetooth.md)：RX复用冲突、原厂地址、开机服务、源码和重启复核。
+8. [蓝牙与相机早期诊断](docs/bluetooth-camera.md)：串口纠错及失败复盘；相机仍不可用。
 
 ## 已达到的状态
 
@@ -27,9 +28,10 @@
 | Wi-Fi | 实际连接、DNS、HTTPS 均已验证 |
 | GPU | Freedreno FD610 / GLES2 桌面合成；应用自身仍保留软件绘图 |
 | 应用启动 | 修复启动通知后，设置约 1.4 秒、计算器约 1 秒；并非所有首次启动都这么快 |
-| 开机与重启 | GPU/触控配置完成正常重启验证；随后应用启动补丁完成桌面会话重启及实测 |
+| 开机与重启 | GPU/触控及蓝牙配置通过正常重启验证；蓝牙初始化、配对记录和USB登录自动恢复 |
 | 深度休眠 | 暂时禁用，曾导致触摸及 USB 无法恢复 |
-| 蓝牙、前后摄像头 | 尚不可用；后摄已识别为 S5K4H7，媒体核心加载通过，CAMSS图注册试验失败，见[诊断记录](docs/bluetooth-camera.md) |
+| 蓝牙 | 扫描、用户配对/连接、开机自动初始化及重启后再次连接通过；配对记录保留，见[修复记录](docs/bluetooth.md) |
+| 前后摄像头 | 仍不可用；后摄已识别为 S5K4H7，媒体核心加载通过，CAMSS图注册试验失败，见[诊断记录](docs/bluetooth-camera.md) |
 | 声音、传感器 | 未完成验证，不宣称可用 |
 | Android 双系统 | **没有**：共享 userdata 已被 Debian 替换；B 槽留有固件不等于 Android 可直接使用 |
 
@@ -38,6 +40,7 @@
 ## 本仓库有什么
 
 - `touch/`：可卸载的连续触控轮询模块源码、实际内核配置和导入符号记录。它绕开了异常的 IRQ 接触上报，**尚未从根本修复中断路径**。
+- `bluetooth/`：单设备UART驱动源码与去标识验证记录。公开整理版拒绝已退役诊断模式；与实机原型的差异明确记录。
 - `patches/`：GTK3 触摸启动 serial 上游补丁、USB configfs 修正。
 - `files/`：实际验证过的桌面、GPU 保护、触控启动和时钟配置；USB gadget helper 为注明的发布整理版，实测早期控制台保留在 `/init`。不是自动覆盖整个 `/etc` 的安装包。
 - `boot/`：从实际启动的 Debian boot 中取回的 `/init` 与返回引导程序辅助源码。
@@ -62,4 +65,4 @@ An experimental **native Debian 13 / Phosh porting log for the Lenovo TB128FU, S
 
 The repository documents reproducible sources and configuration, including fragmented touch contacts, an out-of-tree polling workaround, double rotation, GPU PLL failures, software rendering fallbacks, broken suspend, A/B rollback recovery, and GTK3 touch-serial startup notification delays. It contains no personalized rootfs, device partition dumps or proprietary firmware.
 
-The tested release kernel and the later source reference are different revisions; consult [SOURCES.md](SOURCES.md). GPU composition works under conservative settings, while applications retain software rendering. Single-finger interaction and Wi-Fi were tested; broad hardware support and long-term stability are not claimed. Please read the status, failure history and recovery notes before flashing anything.
+The tested release kernel and the later source reference are different revisions; consult [SOURCES.md](SOURCES.md). GPU composition works under conservative settings, while applications retain software rendering. Single-finger interaction, Wi-Fi, Bluetooth discovery/pairing/connection and reconnection after reboot were tested. Bluetooth needs the correct RX mux and the owner's factory address; the source-publication guard was build-checked separately from the device-tested prototype. Camera support and broad hardware/long-term stability are not claimed. Please read the status, failure history and recovery notes before flashing anything.

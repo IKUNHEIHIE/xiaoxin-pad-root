@@ -1,0 +1,15 @@
+--- tested/tb128_bt_uart.c
++++ published/tb128_bt_uart.c
+@@ -2075,6 +2075,12 @@
+ static int __init qcom_geni_serial_init(void)
+ {
+  int ret;
++ /* Publication guard: these diagnostic modes are retired. Reject them
++  * before requesting pins, changing DT properties or voting supplies.
++  * The validated normal path uses both parameters false.
++  */
++ if (force_rfr_ready || loopback_test)
++  return -EOPNOTSUPP;
+  ret = tb128_add_supplies();
+  if (ret) return ret;
+  /* Stock live DT bt-vdd-core-voltage-level is exactly 1304000 uV.
