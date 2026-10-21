@@ -104,6 +104,26 @@
       "input hotplug on each recovery",
       "sense-on relying on native ESD timing",
       "treating idle zero FIFO as corruption"
-    ]
+    ],
+    "software_test_limitation": "wl_output removal/re-add is not equivalent to physical power-key blanking and did not test password unlock; historical software test disabled after stale Phosh lockscreen/monitor state was observed"
+  },
+  "password_unlock_followup": {
+    "symptom": "password check followed by stale swipe lockscreen while ScreenSaver inactive",
+    "phosh_assertion": "on_lockscreen_unlock: lockscreen identity mismatch",
+    "recovery": "recreate the desktop session, retaining password authentication",
+    "user_verified": [
+      "physical power-key off/on",
+      "swipe to password entry",
+      "authenticate",
+      "interactive desktop",
+      "open Settings"
+    ],
+    "new_session_checks": {
+      "lockscreen_reference_errors": 0,
+      "locked_hint": false,
+      "touch_and_resume_services_active": true,
+      "failed_services": 0
+    },
+    "scope": "No Phosh binary patch, full-device reboot, external monitor or long-term suspend validation."
   }
 }
